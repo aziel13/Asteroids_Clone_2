@@ -2,7 +2,7 @@ using DefaultNamespace;
 using TMPro;
 using UnityEngine;
 
-public class GameUIManager : MonoBehaviour
+public class GameStatsUI : MonoBehaviour
 {
     
     [SerializeField] private TextMeshProUGUI _LevelText;
@@ -14,12 +14,23 @@ public class GameUIManager : MonoBehaviour
     private void Start()
     {
         set_active(false);
-        Starship.Instance.OnGameStateChange += Starship_OnGameStateChange;
-
+        GameManager.Instance.OnPlayerSpawn += GameManager_OnPlayerSpawn;
         GameManager.Instance.OnStatsChange += GameManagerOnStatsChange;
 
     }
+    private void GameManager_OnPlayerSpawn(object sender, GameManager.OnPlayerSpawnEventArgs e)
+    {
+        //when player is spawned subscribe to events from the player
+        e.playerGameObject.GetComponent<Starship>().OnGameStateChange += Starship_OnGameStateChange;
+        e.playerGameObject.GetComponent<Starship>().OnCrash += Starship_OnCrash;
+    }
     
+    private void Starship_OnCrash(object sender,Starship.OnCrashEventArgs e)
+    {
+        //unsubscribe from events from the player
+        e.gameObject.GetComponent<Starship>().OnGameStateChange -= Starship_OnGameStateChange;
+
+    }
     public void GameManagerOnStatsChange(object sender, GameManager.OnStatsChangeEventArgs e)
     {
         _LevelText.text = $"{e.level}";

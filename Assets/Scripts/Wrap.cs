@@ -14,15 +14,12 @@ namespace DefaultNamespace
         private float yoffset = 1;
         private float xoffset = 1;
 
-
-        private void Awake()
+        private void Start()
         {
-
             if (this.gameCamera == null)
             { 
                 gameCamera = GameManager.Instance.mainCamera;
             }
-
         }
 
 

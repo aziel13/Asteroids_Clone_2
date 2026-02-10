@@ -20,12 +20,17 @@ public class Starship : Monobehaviour_Singleton<Starship>
     [SerializeField] private Bullet bulletPrefab;
     [SerializeField] private GameObject _ShipExplosionPrefab;
     [SerializeField] private float shipExplosionLifeTime;
+    [SerializeField] private float damageImmunityTimeSpan = 3;
+    
+    private float _damageImmunityTimer;
+    
+    private bool damageImmunity = false;
     
     private float bulletFrequency = 1.5f;
     private float bulletTimer = 0f;
     private float bulletTimerMax = 0.5f;
     
-    private Rigidbody2D shipRigidbody; 
+    private Rigidbody2D shipRigidbody;
     
     
     private bool isAlive = true;
@@ -47,28 +52,29 @@ public class Starship : Monobehaviour_Singleton<Starship>
     {
         Startup,
         GameRunning,
-        GameEnd,
+        Paused,
+        Respawning,
+        GameOver,
     }
     
     private GameState _gameState;
-    public event EventHandler<OnGameStateChangeEventArgs> OnGameStateChange;
-
-    [SerializeField] private int lives = 3;
     
+    public event EventHandler<OnGameStateChangeEventArgs> OnGameStateChange;
+    
+    public event EventHandler<OnGameStateChangeEventArgs> OnPlayerDeSpawn;
+    
+   
     public class OnGameStateChangeEventArgs : EventArgs
     {
         public GameState gameState;
     }
-    
     
     public event EventHandler<OnCrashEventArgs> OnCrash;
 
     
     public class OnCrashEventArgs : EventArgs
     {
-        public int currentLives;
-        public float scoreMultiplier;
-        public int score;
+        public GameObject gameObject;
     }
     
     private void Awake()
@@ -130,8 +136,34 @@ public class Starship : Monobehaviour_Singleton<Starship>
                     bulletTimer -= bulletFrequency * Time.deltaTime;
                 }
 
+                if (_damageImmunityTimer > 0)
+                {
+
+                    _damageImmunityTimer -=  Time.deltaTime;
+
+                }
+
                 break;
-            case GameState.GameEnd:
+            
+            case GameState.Respawning:
+                
+                if (GameInput.Instance.IsUpActionPressed() ||
+                    GameInput.Instance.IsLeftActionPressed() ||
+                    GameInput.Instance.IsRightActionPressed() ||
+                    GameInput.Instance.IsWeaponDischargeActionPressed())
+                {
+                    SetGameState(GameState.GameRunning);
+                }
+                
+                break;
+            case GameState.Paused:
+                if (GameInput.Instance.IsPausedActionPressed())
+                {
+                    SetGameState(GameState.GameRunning);
+                }
+                break;
+            
+            case GameState.GameOver:
                 break;
             
         }
@@ -149,14 +181,27 @@ public class Starship : Monobehaviour_Singleton<Starship>
 
     private void OnTriggerEnter2D(Collider2D collider2D)
     {
-        if (collider2D.TryGetComponent(out Asteroid asteroid))
+        if (collider2D.TryGetComponent(out Asteroid asteroid) && _damageImmunityTimer <= 0)
         {
                  
             GameObject explosion = Instantiate(_ShipExplosionPrefab, gameObject.transform.position, quaternion.identity);
-                 
+            
+            
+            OnCrash?.Invoke(this, new OnCrashEventArgs
+            {
+                gameObject = this.gameObject,
+            });
+            
             Destroy(gameObject);
  
         }
+    }
+
+    public void grantTemporaryDamageImmunity()
+    {
+         
+        _damageImmunityTimer = damageImmunityTimeSpan;
+        
     }
 
 }

@@ -71,65 +71,79 @@ namespace DefaultNamespace
 
             _asteroidShardMax = asteroidShardPrefabs.Length;
             
-            Starship.Instance.OnGameStateChange += Starship_OnGameStateChange;
+           
+            GameManager.Instance.OnPlayerSpawn += GameManager_OnPlayerSpawn;
+        }
+        
+        private void GameManager_OnPlayerSpawn(object sender, GameManager.OnPlayerSpawnEventArgs e)
+        {
+            
+            //when player is spawned subscribe to events from the player
+            e.playerGameObject.GetComponent<Starship>().OnGameStateChange += Starship_OnGameStateChange;
+            e.playerGameObject.GetComponent<Starship>().OnCrash += Starship_OnCrash;
+        }
+        
+        private void Starship_OnCrash(object sender,Starship.OnCrashEventArgs e)
+        {
+            //unsubscribe from events from the player
+            e.gameObject.GetComponent<Starship>().OnGameStateChange -= Starship_OnGameStateChange;
 
         }
-
         private void Starship_OnGameStateChange(object sender, Starship.OnGameStateChangeEventArgs e)
         {
 
             if (e.gameState == Starship.GameState.GameRunning)
             {
+                SpawnLargeAsteroids();
+            }
+
+        }
+
+        private void SpawnLargeAsteroids()
+        {
+            if (LargeAsteroidCount == 0 && ShatteredAsteroidCount == 0)
+            {
                 int AsteroidSpawnerIndex = 0;
-        
+
                 isGameRunning = true;
-                var levelAsteroidCount = GetAsteroidCountForCurrentLevel(); 
+                var levelAsteroidCount = GetAsteroidCountForCurrentLevel();
                 for (int i = 0; i < levelAsteroidCount; i++)
                 {
-                    
+
                     GameObject gameasteroidSpawnPoint = AsteroidSpawners[AsteroidSpawnerIndex];
-                    
-                    GameObject largeAsteroid = Instantiate(LargeAsteroidPrefab, gameasteroidSpawnPoint.transform.position,Quaternion.identity);
+
+                    GameObject largeAsteroid = Instantiate(LargeAsteroidPrefab,
+                        gameasteroidSpawnPoint.transform.position, Quaternion.identity);
                     Asteroid largeAsteroid_script = largeAsteroid.GetComponent<Asteroid>();
                     largeAsteroid_script.OnAsteroidDestroyed += Asteroid_OnAsteroidDestroyed;
-                    
-                    float spawnSpeed = Random.Range(largeAsteroid_script.asteroidSpeed - largeAsteroid_script.asteroidSize1 ,
-                        largeAsteroid_script.asteroidMaxSpeed1 -  largeAsteroid_script.asteroidSize1 );
-                    
-                    AsteroidSpawnPoint asteroidSpawnPoint = AsteroidSpawners[AsteroidSpawnerIndex].GetComponent<AsteroidSpawnPoint>();
-                    
-                    
-                    int targetDirection = Random.Range(0,asteroidSpawnPoint.asteroidTargets.Length - 1);
+
+                    float spawnSpeed = Random.Range(
+                        largeAsteroid_script.asteroidSpeed - largeAsteroid_script.asteroidSize1,
+                        largeAsteroid_script.asteroidMaxSpeed1 - largeAsteroid_script.asteroidSize1);
+
+                    AsteroidSpawnPoint asteroidSpawnPoint =
+                        AsteroidSpawners[AsteroidSpawnerIndex].GetComponent<AsteroidSpawnPoint>();
+
+
+                    int targetDirection = Random.Range(0, asteroidSpawnPoint.asteroidTargets.Length - 1);
 
                     Vector3 direction = asteroidSpawnPoint.asteroidTargets[targetDirection].position;
-                    
-                    Vector2 direction2d =  new Vector2(direction.x, direction.y);
-                    
-                    
+
+                    Vector2 direction2d = new Vector2(direction.x, direction.y);
+
+
                     Rigidbody2D asteroidRigidBody = largeAsteroid.GetComponent<Rigidbody2D>();
-                    asteroidRigidBody.AddForce( spawnSpeed *  direction2d);
-                    
+                    asteroidRigidBody.AddForce(spawnSpeed * direction2d);
+
                     AsteroidSpawnerIndex++;
-                    
-                    if (AsteroidSpawnerIndex ==  AsteroidSpawners.Length)
+
+                    if (AsteroidSpawnerIndex == AsteroidSpawners.Length)
                     {
                         AsteroidSpawnerIndex = 0;
                     }
 
                 }
-
-
-                if (LargeAsteroidCount == 0 && ShatteredAsteroidCount == 0)
-                {
-                    OnAllAsteroidsCleared?.Invoke(this, new OnAllAsteroidsClearedEventArgs
-                    {
-                        shatteredAsteroidPeicesDestroyedCount = shatteredAsteroidDestroyedCount,
-                        largeAsteroidDestroyedCount = largeAsteroidDestroyedCount
-                    });
-                }
-
             }
-
         }
 
         private void Asteroid_OnAsteroidDestroyed(object sender,  Asteroid.OnAsteroidDestroyedEventArgs  e)
@@ -186,6 +200,15 @@ namespace DefaultNamespace
             {
                 asteroidToDestroyGameObject = e.asteroidGameObject,
             });
+            
+            if (LargeAsteroidCount == 0 && ShatteredAsteroidCount == 0)
+            {
+                OnAllAsteroidsCleared?.Invoke(this, new OnAllAsteroidsClearedEventArgs
+                {
+                    shatteredAsteroidPeicesDestroyedCount = shatteredAsteroidDestroyedCount,
+                    largeAsteroidDestroyedCount = largeAsteroidDestroyedCount
+                });
+            }
             
         }
 

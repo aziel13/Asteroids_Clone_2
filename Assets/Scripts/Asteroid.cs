@@ -18,7 +18,9 @@ namespace DefaultNamespace
 
         [SerializeField] private float _asteroid_MaxSpeed = 2f;
 
-        [SerializeField] private  int scoreMultiplier = 1;
+        [SerializeField] private  int scoreValue = 1;
+
+        public int getScoreValue => scoreValue;
 
         [SerializeField] private float asteroidDestroyTime = 0.02f;
         [SerializeField] private float bulletDestroyTime = 0.01f;

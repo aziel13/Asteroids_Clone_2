@@ -1,18 +1,18 @@
 using DefaultNamespace;
-using UnityEngine;
 using TMPro;
+using UnityEngine;
 
-public class StartTextUIFlash : MonoBehaviour
+public class GameOverUIVisuals : MonoBehaviour
 {
     private TextMeshProUGUI _TextUI;
     [SerializeField] private float flashSpeed = 5f;
 
     private void Start()
     {
-        
         _TextUI = GetComponentInChildren<TextMeshProUGUI>();
         GameManager.Instance.OnPlayerSpawn += GameManager_OnPlayerSpawn;
-     
+        
+        _TextUI.gameObject.SetActive(false);
     }
     private void GameManager_OnPlayerSpawn(object sender, GameManager.OnPlayerSpawnEventArgs e)
     {
@@ -29,7 +29,12 @@ public class StartTextUIFlash : MonoBehaviour
     }
     private void Starship_OnGameStateChange(object sender, Starship.OnGameStateChangeEventArgs e)
     {
-        _TextUI.gameObject.SetActive(false);
+        if (e.gameState == Starship.GameState.GameOver)
+        {
+            
+            _TextUI.gameObject.SetActive(true);
+        }
+
     }
 
     private void Update()
@@ -38,6 +43,5 @@ public class StartTextUIFlash : MonoBehaviour
         _TextUI.color = new Color(_TextUI.color.r, _TextUI.color.g, _TextUI.color.b, alpha);
         
     }
-
 
 }
