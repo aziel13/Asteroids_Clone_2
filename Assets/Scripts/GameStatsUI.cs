@@ -40,12 +40,12 @@ public class GameStatsUI : MonoBehaviour
     
     private void Starship_OnGameStateChange(object sender, Starship.OnGameStateChangeEventArgs e)
     {
-        if (e.gameState == Starship.GameState.GameRunning)
+        if (e.gameState == GameManager.GameState.GameRunning)
         {
             set_active(true);
         }
 
-        else if (e.gameState == Starship.GameState.Startup)
+        else if (e.gameState == GameManager.GameState.Startup)
         {
             set_active(false);
         }

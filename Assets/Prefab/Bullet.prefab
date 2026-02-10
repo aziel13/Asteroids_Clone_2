@@ -203,7 +203,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3e825a94def945a39cbd793a8f5257ae, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DefaultNamespace.Bullet
-  bulletForce: 1000
+  bulletForce: 10000
 --- !u!114 &-5871553668044870361
 MonoBehaviour:
   m_ObjectHideFlags: 0

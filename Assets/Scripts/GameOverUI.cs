@@ -1,0 +1,43 @@
+using DefaultNamespace;
+using TMPro;
+using UnityEngine;
+
+public class GameOverUI : MonoBehaviour
+{
+    [SerializeField] private TextMeshProUGUI _TextUI;
+    
+    [SerializeField] private float flashSpeed = 5f;
+
+    private void Start()
+    {
+        
+        GameManager.Instance.OnGameOver += GameManager_OnGameOverChange;
+        
+        
+        
+        
+        gameObject.SetActive(false);
+    }
+     
+    
+   
+    private void GameManager_OnGameOverChange(object sender, GameManager.OnGameOverEventArgs e)
+    {
+        
+            
+            _TextUI.text = $"{e.level}\n";
+            _TextUI.text += $"{e.final_score}\n";
+            
+            gameObject.SetActive(true);
+        
+
+    }
+
+    private void Update()
+    {
+        float alpha = Mathf.PingPong(Time.time, flashSpeed);
+        _TextUI.color = new Color(_TextUI.color.r, _TextUI.color.g, _TextUI.color.b, alpha);
+        
+    }
+
+}

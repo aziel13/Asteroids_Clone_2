@@ -46,10 +46,10 @@ public class RespawnUI : MonoBehaviour
         
     }
 
-    private void GameStateChange(Starship.GameState gameState)
+    private void GameStateChange(GameManager.GameState gameState)
     {
         
-        if (gameState == Starship.GameState.Respawning)
+        if (gameState == GameManager.GameState.Respawning)
         {
             _RespawnTextUI.gameObject.SetActive(true);
         }

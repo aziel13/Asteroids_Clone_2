@@ -9,15 +9,27 @@ namespace DefaultNamespace
 {
     public class GameManager : Monobehaviour_Singleton<GameManager>
     {
+        public enum GameState
+        {
+            Startup,
+            GameRunning,
+            Paused,
+            Respawning,
+            GameOver,
+        }
+        
         [SerializeField] private Camera _mainCamera;
         [SerializeField] private GameObject mainPlayerSpawnPoint;
         [SerializeField] private GameObject playerPrefab;
         [SerializeField] private float sphereCastRadius = 1f;
-        private static int _levelNumber = 1;
+        
+        [SerializeField] private int _lives = 3;
+        
+        private static int _level = 1;
         
         private static int finalScore = 0;
 
-        public static int levelNumber => _levelNumber;
+        public static int level => _level;
 
         public static int finalScore1 => finalScore;
         
@@ -25,12 +37,12 @@ namespace DefaultNamespace
         
         private bool isGameRunning = true;
         
-        private Starship.GameState _gameState;
+        private GameState _gameState;
         
         private bool unPauseButtonPressed = false;
 
         private int _score = 0;
-        private int _lives = 3;
+        
         
         private float _time = 0;
         private bool isTimerActive;
@@ -50,7 +62,7 @@ namespace DefaultNamespace
         public class OnStateChangeEventArgs : EventArgs
         {
             
-            public Starship.GameState gameState;
+            public GameState gameState;
             
         }
 
@@ -61,6 +73,13 @@ namespace DefaultNamespace
             public int level;
             public int score;
             public int lives;
+        }
+        public event EventHandler<OnGameOverEventArgs> OnGameOver;
+        
+        public class OnGameOverEventArgs : EventArgs
+        {
+            public int level;
+            public int final_score;
         }
         
         public event EventHandler<OnLevelChangeEventArgs> OnLevelChange;
@@ -73,7 +92,7 @@ namespace DefaultNamespace
         private void Awake()
         {
             base.Awake();
-            _gameState = Starship.GameState.Startup;
+            _gameState = GameState.Startup;
             
         }
 
@@ -82,10 +101,36 @@ namespace DefaultNamespace
             
             AsteroidManager.Instance.OnAllAsteroidsCleared += AsteroidManager_OnLevelCleared;
 
-           
+            
 
             AsteroidManager.Instance.OnDestroyAsteroid += AsteroidManager_OnDestroyAsteroid;
 
+
+            StartInitialization();
+        }
+
+
+        private void StartInitialization()
+        {
+            setPlayerPrefabMaxDistance();
+
+            if (_gameState == GameState.Startup)
+            {
+                //spawn player in scene
+                spawnPlayer();
+                
+            }
+            else
+            {
+                //somehow were not in the right state. display an error
+                Debug.LogWarning("GameManager: StartInitialization called while game state is not GameState.Startup");
+                
+            }
+        }
+
+        private void setPlayerPrefabMaxDistance()
+        {
+            
             if (playerPrefab)
             {
                 if (playerPrefab.TryGetComponent<PolygonCollider2D>(out PolygonCollider2D polygonCollider2D))
@@ -121,7 +166,8 @@ namespace DefaultNamespace
                     }
                 }
             }
-
+            
+            
         }
 
         private void Starship_OnCrash(object sender, Starship.OnCrashEventArgs e)
@@ -132,26 +178,39 @@ namespace DefaultNamespace
                 
                 _lives--;
 
+                _gameState = GameState.Respawning;
+
                 OnStatsChange?.Invoke(this,
                 new OnStatsChangeEventArgs
                 {
-                    level = _levelNumber,
+                    level = _level,
                     score = _score,
                     lives = _lives,
                 });
-
+                
+                
                 OnStateChange?.Invoke(this,
                     new OnStateChangeEventArgs
                     {
-                        gameState = Starship.GameState.Respawning,   
+                        gameState = _gameState,   
                     });                
             }
             else
             {
+                _gameState = GameState.GameOver;
+                
+                 
+                OnGameOver?.Invoke(this,
+                new OnGameOverEventArgs
+                {
+                       level = _level,
+                       final_score = _score,
+                });    
+                
                 OnStateChange?.Invoke(this,
                     new OnStateChangeEventArgs
                     {
-                        gameState = Starship.GameState.GameOver,   
+                        gameState = _gameState,   
                     });        
             }
         }
@@ -166,7 +225,7 @@ namespace DefaultNamespace
             OnStatsChange?.Invoke(this,
                 new OnStatsChangeEventArgs
                 {
-                    level = _levelNumber,
+                    level = _level,
                     score = _score,
                     lives = _lives,
                 });
@@ -175,25 +234,19 @@ namespace DefaultNamespace
 
         private void Starship_OnGameStateChange(object sender, Starship.OnGameStateChangeEventArgs e)
         {
-            if (_gameState == Starship.GameState.Startup && e.gameState == Starship.GameState.GameRunning)
+            if (_gameState == GameState.Startup && e.gameState == GameState.GameRunning)
             {
-                
-                spawnPlayer();
                 
                 // update the ui values
                 OnStatsChange?.Invoke(this,
                     new OnStatsChangeEventArgs
                     {
-                        level = _levelNumber,
+                        level = _level,
                         score = _score,
                         lives = _lives,
                     });
                 
-            } else if (_gameState == Starship.GameState.Respawning && e.gameState == Starship.GameState.GameRunning)
-            {
-
-                spawnPlayer();
-
+                
             }
         }
 
@@ -202,12 +255,12 @@ namespace DefaultNamespace
             //reset the players position.
             
             // increase the level
-            _levelNumber++;
+            _level++;
             
             OnLevelChange?.Invoke(this,
                 new OnLevelChangeEventArgs
                 {
-                    level = _levelNumber, 
+                    level = _level, 
                 });
             
         }
@@ -215,7 +268,7 @@ namespace DefaultNamespace
         private void spawnPlayer()
         {
 
-            if (_gameState == Starship.GameState.Startup)
+            if (_gameState == GameState.Startup)
             {
                 GameObject player = Instantiate(playerPrefab,mainPlayerSpawnPoint.transform.position, quaternion.identity);
                 OnPlayerSpawn?.Invoke(this,
@@ -228,12 +281,14 @@ namespace DefaultNamespace
 
 
             }
-            else if(_gameState == Starship.GameState.Respawning)
+            else if(_gameState == GameState.Respawning)
             {
-
+                Debug.Log("Respawning");
                 //check if there is an asteroid at the main spawn point.
                 var rayHit = Physics2D.CircleCast(mainPlayerSpawnPoint.transform.position, playerPrefabMaxDistance + sphereCastRadius, Vector2.zero);
                 GameObject player = Instantiate(playerPrefab,mainPlayerSpawnPoint.transform.position, quaternion.identity);
+                
+                
                 OnPlayerSpawn?.Invoke(this,
                     new OnPlayerSpawnEventArgs
                     {
@@ -280,8 +335,30 @@ namespace DefaultNamespace
                 }
 
             }
-        }
 
+            if (_gameState == GameState.Respawning)
+            {
+                if (GameInput.Instance.IsWeaponDischargeActionPressed())
+                {
+                    
+                    spawnPlayer();
+                    
+                    SetGameState(GameState.GameRunning);
+                }
+            }
+
+
+        }
+        
+        private void SetGameState(GameState gameState)
+        {
+            _gameState =  gameState;
+         
+            OnStateChange?.Invoke(this, new OnStateChangeEventArgs
+            {
+                gameState = _gameState,
+            });
+        }
         private void FixedUpdate()
         {
             if (isTimerActive)
@@ -307,14 +384,14 @@ namespace DefaultNamespace
             {
                 isGameRunning = true;
                 Time.timeScale = 1f;
-                _gameState = Starship.GameState.GameRunning;
+                _gameState = GameState.GameRunning;
 
             }
             else
             {
                 isGameRunning = false;
                 Time.timeScale = 0f;
-                _gameState = Starship.GameState.Paused;
+                _gameState = GameState.Paused;
             }
 
             OnStateChange?.Invoke(this,
@@ -328,14 +405,14 @@ namespace DefaultNamespace
         {
 
             Time.timeScale = 1f;
-            _levelNumber = 1;
+            _level = 1;
             finalScore = 0;
 
         }
 
         public int GetLevelNumber()
         {
-            return _levelNumber;
+            return _level;
         }
 
     }

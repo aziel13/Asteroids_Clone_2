@@ -25,7 +25,7 @@ namespace DefaultNamespace
               
         }
         
-        private void FixedUpdate()
+        private void Start()
         {
             GetComponent<Rigidbody2D>().AddForce(  _shipTransform.up * (bulletForce * Time.deltaTime));
             

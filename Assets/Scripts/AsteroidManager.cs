@@ -92,7 +92,7 @@ namespace DefaultNamespace
         private void Starship_OnGameStateChange(object sender, Starship.OnGameStateChangeEventArgs e)
         {
 
-            if (e.gameState == Starship.GameState.GameRunning)
+            if (e.gameState == GameManager.GameState.GameRunning)
             {
                 SpawnLargeAsteroids();
             }

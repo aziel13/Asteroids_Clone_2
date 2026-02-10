@@ -57,7 +57,7 @@ public class Starship : Monobehaviour_Singleton<Starship>
         GameOver,
     }
     
-    private GameState _gameState;
+    private GameManager.GameState _gameState;
     
     public event EventHandler<OnGameStateChangeEventArgs> OnGameStateChange;
     
@@ -66,7 +66,7 @@ public class Starship : Monobehaviour_Singleton<Starship>
    
     public class OnGameStateChangeEventArgs : EventArgs
     {
-        public GameState gameState;
+        public GameManager.GameState gameState;
     }
     
     public event EventHandler<OnCrashEventArgs> OnCrash;
@@ -81,7 +81,7 @@ public class Starship : Monobehaviour_Singleton<Starship>
     {
         base.Awake();
         shipRigidbody = GetComponent<Rigidbody2D>(); 
-        _gameState = GameState.Startup;
+        _gameState = GameManager.GameState.Startup;
     }
 
 
@@ -91,17 +91,17 @@ public class Starship : Monobehaviour_Singleton<Starship>
         switch (_gameState)
         {
             default:
-            case GameState.Startup:
+            case GameManager.GameState.Startup:
                 if (GameInput.Instance.IsUpActionPressed() ||
                     GameInput.Instance.IsLeftActionPressed() ||
                 GameInput.Instance.IsRightActionPressed() ||
                     GameInput.Instance.IsWeaponDischargeActionPressed())
                 {
-                    SetGameState(GameState.GameRunning);
+                    SetGameState(GameManager.GameState.GameRunning);
                 }
 
                 break;
-            case GameState.GameRunning:
+            case GameManager.GameState.GameRunning:
                 
                 if (GameInput.Instance.IsUpActionPressed())
                 {
@@ -141,35 +141,22 @@ public class Starship : Monobehaviour_Singleton<Starship>
 
                     _damageImmunityTimer -=  Time.deltaTime;
 
-                }
-
+                }                 
                 break;
-            
-            case GameState.Respawning:
-                
-                if (GameInput.Instance.IsUpActionPressed() ||
-                    GameInput.Instance.IsLeftActionPressed() ||
-                    GameInput.Instance.IsRightActionPressed() ||
-                    GameInput.Instance.IsWeaponDischargeActionPressed())
-                {
-                    SetGameState(GameState.GameRunning);
-                }
-                
-                break;
-            case GameState.Paused:
+            case GameManager.GameState.Paused:
                 if (GameInput.Instance.IsPausedActionPressed())
                 {
-                    SetGameState(GameState.GameRunning);
+                    SetGameState(GameManager.GameState.GameRunning);
                 }
                 break;
             
-            case GameState.GameOver:
+            case GameManager.GameState.GameOver:
                 break;
             
         }
     }
 
-    private void SetGameState(GameState gameState)
+    private void SetGameState(GameManager.GameState gameState)
     {
         _gameState =  gameState;
          
