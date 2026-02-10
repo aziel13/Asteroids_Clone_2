@@ -82,6 +82,12 @@ public class Starship : Monobehaviour_Singleton<Starship>
         base.Awake();
         shipRigidbody = GetComponent<Rigidbody2D>(); 
         _gameState = GameManager.GameState.Startup;
+        
+        GameManager.Instance.OnStateChange += GameManager_OnGameStateChange;
+    }
+    private void GameManager_OnGameStateChange(object sender, GameManager.OnStateChangeEventArgs e)
+    {
+        _gameState = e.gameState;
     }
 
 
@@ -92,14 +98,7 @@ public class Starship : Monobehaviour_Singleton<Starship>
         {
             default:
             case GameManager.GameState.Startup:
-                if (GameInput.Instance.IsUpActionPressed() ||
-                    GameInput.Instance.IsLeftActionPressed() ||
-                GameInput.Instance.IsRightActionPressed() ||
-                    GameInput.Instance.IsWeaponDischargeActionPressed())
-                {
-                    SetGameState(GameManager.GameState.GameRunning);
-                }
-
+                
                 break;
             case GameManager.GameState.GameRunning:
                 

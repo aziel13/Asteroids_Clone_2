@@ -14,23 +14,24 @@ public class GameStatsUI : MonoBehaviour
     private void Start()
     {
         set_active(false);
-        GameManager.Instance.OnPlayerSpawn += GameManager_OnPlayerSpawn;
+        GameManager.Instance.OnStateChange += GameManager_OnGameStateChange;
         GameManager.Instance.OnStatsChange += GameManagerOnStatsChange;
 
     }
-    private void GameManager_OnPlayerSpawn(object sender, GameManager.OnPlayerSpawnEventArgs e)
+    private void GameManager_OnGameStateChange(object sender, GameManager.OnStateChangeEventArgs e)
     {
-        //when player is spawned subscribe to events from the player
-        e.playerGameObject.GetComponent<Starship>().OnGameStateChange += Starship_OnGameStateChange;
-        e.playerGameObject.GetComponent<Starship>().OnCrash += Starship_OnCrash;
+        if (e.gameState == GameManager.GameState.GameRunning)
+        {
+            set_active(true);
+        }
+
+        else  
+        {
+            set_active(false);
+        }
+        
     }
     
-    private void Starship_OnCrash(object sender,Starship.OnCrashEventArgs e)
-    {
-        //unsubscribe from events from the player
-        e.gameObject.GetComponent<Starship>().OnGameStateChange -= Starship_OnGameStateChange;
-
-    }
     public void GameManagerOnStatsChange(object sender, GameManager.OnStatsChangeEventArgs e)
     {
         _LevelText.text = $"{e.level}";
@@ -38,18 +39,7 @@ public class GameStatsUI : MonoBehaviour
         _LivesText.text = $"{e.lives}";
     }
     
-    private void Starship_OnGameStateChange(object sender, Starship.OnGameStateChangeEventArgs e)
-    {
-        if (e.gameState == GameManager.GameState.GameRunning)
-        {
-            set_active(true);
-        }
-
-        else if (e.gameState == GameManager.GameState.Startup)
-        {
-            set_active(false);
-        }
-    }
+     
     
     private void set_active(bool isActive)
     {

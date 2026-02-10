@@ -1,13 +1,21 @@
 using DefaultNamespace;
+using System;
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class GameOverUI : MonoBehaviour
 {
     [SerializeField] private TextMeshProUGUI _TextUI;
-    
+    [SerializeField] private TextMeshProUGUI _NewGameInstruction;
+        
     [SerializeField] private float flashSpeed = 5f;
 
+    private Action newGameButtonClickAction;
+    private void Awake()
+    {
+        
+    }
     private void Start()
     {
         
@@ -28,6 +36,7 @@ public class GameOverUI : MonoBehaviour
             _TextUI.text = $"{e.level}\n";
             _TextUI.text += $"{e.final_score}\n";
             
+           _NewGameInstruction.text = $"Press {GameInput.Instance.GetFireKeyName()} for New Game!\n";
             gameObject.SetActive(true);
         
 

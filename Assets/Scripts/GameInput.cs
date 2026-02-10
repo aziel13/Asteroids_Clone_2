@@ -1,4 +1,5 @@
 ﻿using DefaultNamespace.Utility;
+using UnityEngine.InputSystem;
 
 namespace DefaultNamespace
 {
@@ -8,7 +9,6 @@ namespace DefaultNamespace
     public class GameInput : Monobehaviour_Singleton<GameInput>
     {
     
-         
         private InputActions _inputActions;
         [SerializeField] private bool InputActions_enabled = false;
        
@@ -58,6 +58,14 @@ namespace DefaultNamespace
         {
             return _inputActions.Player.Warp.IsPressed();
         }
+
+        public string GetFireKeyName()
+        {
+
+            return _inputActions.Player.Fire.GetBindingDisplayString(0);
+            
+        }
+
     }
 
 }

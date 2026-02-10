@@ -16,6 +16,7 @@ namespace DefaultNamespace
             Paused,
             Respawning,
             GameOver,
+            NextLevel,
         }
         
         [SerializeField] private Camera _mainCamera;
@@ -43,13 +44,13 @@ namespace DefaultNamespace
 
         private int _score = 0;
         
-        
         private float _time = 0;
         private bool isTimerActive;
 
         private float playerPrefabMaxDistance = 0;
-       
-        
+        private GameObject _player;
+
+
         public event EventHandler<OnPlayerSpawnEventArgs> OnPlayerSpawn;
         public class OnPlayerSpawnEventArgs : EventArgs
         {
@@ -87,6 +88,8 @@ namespace DefaultNamespace
         public class OnLevelChangeEventArgs : EventArgs
         {
             public int level;
+            public int score;
+            
         }
 
         private void Awake()
@@ -252,17 +255,21 @@ namespace DefaultNamespace
 
         private void AsteroidManager_OnLevelCleared(object sender, AsteroidManager.OnAllAsteroidsClearedEventArgs e)
         {
-            //reset the players position.
-            
-            // increase the level
-            _level++;
             
             OnLevelChange?.Invoke(this,
                 new OnLevelChangeEventArgs
                 {
                     level = _level, 
+                    score = _score
                 });
             
+            _gameState = GameState.NextLevel;
+            OnStateChange?.Invoke(this, new OnStateChangeEventArgs
+            {
+                gameState = _gameState,
+            });
+            
+            _player.SetActive(false);
         }
 
         private void spawnPlayer()
@@ -271,6 +278,9 @@ namespace DefaultNamespace
             if (_gameState == GameState.Startup)
             {
                 GameObject player = Instantiate(playerPrefab,mainPlayerSpawnPoint.transform.position, quaternion.identity);
+
+                _player = player;
+                
                 OnPlayerSpawn?.Invoke(this,
                     new OnPlayerSpawnEventArgs
                     {
@@ -278,16 +288,15 @@ namespace DefaultNamespace
                     });
                 Starship.Instance.OnCrash += Starship_OnCrash;
                 Starship.Instance.OnGameStateChange += Starship_OnGameStateChange;
-
-
+                _player.SetActive(false);
+                 
             }
             else if(_gameState == GameState.Respawning)
             {
-                Debug.Log("Respawning");
                 //check if there is an asteroid at the main spawn point.
                 var rayHit = Physics2D.CircleCast(mainPlayerSpawnPoint.transform.position, playerPrefabMaxDistance + sphereCastRadius, Vector2.zero);
                 GameObject player = Instantiate(playerPrefab,mainPlayerSpawnPoint.transform.position, quaternion.identity);
-                
+                _player = player;
                 
                 OnPlayerSpawn?.Invoke(this,
                     new OnPlayerSpawnEventArgs
@@ -304,13 +313,6 @@ namespace DefaultNamespace
                 Starship.Instance.OnGameStateChange += Starship_OnGameStateChange;
 
             }
-
-        }
-
-        private void LoadCurrentLevel()
-        {
-
-
 
         }
 
@@ -336,6 +338,18 @@ namespace DefaultNamespace
 
             }
 
+            if (_gameState == GameState.Startup)
+            {
+                if (GameInput.Instance.IsUpActionPressed() ||
+                    GameInput.Instance.IsLeftActionPressed() ||
+                    GameInput.Instance.IsRightActionPressed() ||
+                    GameInput.Instance.IsWeaponDischargeActionPressed())
+                {
+                    SetGameState(GameManager.GameState.GameRunning);
+                    _player.SetActive(true);
+                }
+            }
+            
             if (_gameState == GameState.Respawning)
             {
                 if (GameInput.Instance.IsWeaponDischargeActionPressed())
@@ -346,6 +360,50 @@ namespace DefaultNamespace
                     SetGameState(GameState.GameRunning);
                 }
             }
+
+            if (_gameState == GameState.NextLevel)
+            {
+                if (GameInput.Instance.IsWeaponDischargeActionPressed())
+                {
+                    
+                    
+                    
+                    finalScore += _score;
+                    _score = 0;
+                    // increase the level
+                    _level++;
+                    
+                    
+                    SetGameState(GameState.GameRunning);
+                    
+                    //reset the players position.
+                    _player.transform.position = Vector3.zero;
+                    _player.transform.rotation = Quaternion.identity;
+                    _player.SetActive(true);
+                    
+                    OnStatsChange?.Invoke(this,
+                        new OnStatsChangeEventArgs
+                        {
+                            level = _level,
+                            score = _score,
+                            lives = _lives,
+                        });
+
+                }
+
+            }
+
+
+            if (_gameState == GameState.GameOver)
+            {
+                if (GameInput.Instance.IsWeaponDischargeActionPressed())
+                {
+
+                    NewGame();
+
+                }
+            }
+
 
 
         }
@@ -413,6 +471,12 @@ namespace DefaultNamespace
         public int GetLevelNumber()
         {
             return _level;
+        }
+
+        public void NewGame()
+        {
+            ResetStaticGameValues();
+            SceneLoader.LoadScene(SceneLoader.Scene.GameScene);
         }
 
     }

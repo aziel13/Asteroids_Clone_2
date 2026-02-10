@@ -44,7 +44,7 @@ namespace DefaultNamespace
 
         public int shatteredAsteroidCount => ShatteredAsteroidCount;
 
-        private int asteroidLevelIncrementFactor = 2;
+        [SerializeField]private int asteroidLevelIncrementFactor = 2;
         private int asteroidLevelMultiplierFactor = 2;
 
         private int largeAsteroidDestroyedCount;
@@ -72,33 +72,17 @@ namespace DefaultNamespace
             _asteroidShardMax = asteroidShardPrefabs.Length;
             
            
-            GameManager.Instance.OnPlayerSpawn += GameManager_OnPlayerSpawn;
+            GameManager.Instance.OnStateChange += GameManager_OnGameStateChange;
         }
         
-        private void GameManager_OnPlayerSpawn(object sender, GameManager.OnPlayerSpawnEventArgs e)
+        private void GameManager_OnGameStateChange(object sender, GameManager.OnStateChangeEventArgs e)
         {
-            
-            //when player is spawned subscribe to events from the player
-            e.playerGameObject.GetComponent<Starship>().OnGameStateChange += Starship_OnGameStateChange;
-            e.playerGameObject.GetComponent<Starship>().OnCrash += Starship_OnCrash;
-        }
-        
-        private void Starship_OnCrash(object sender,Starship.OnCrashEventArgs e)
-        {
-            //unsubscribe from events from the player
-            e.gameObject.GetComponent<Starship>().OnGameStateChange -= Starship_OnGameStateChange;
-
-        }
-        private void Starship_OnGameStateChange(object sender, Starship.OnGameStateChangeEventArgs e)
-        {
-
             if (e.gameState == GameManager.GameState.GameRunning)
             {
                 SpawnLargeAsteroids();
             }
-
         }
-
+       
         private void SpawnLargeAsteroids()
         {
             if (LargeAsteroidCount == 0 && ShatteredAsteroidCount == 0)
@@ -142,7 +126,9 @@ namespace DefaultNamespace
                         AsteroidSpawnerIndex = 0;
                     }
 
+                    
                 }
+                LargeAsteroidCount+= levelAsteroidCount;
             }
         }
 
@@ -155,9 +141,7 @@ namespace DefaultNamespace
             
             if (!asteroidScript.isAsteroidShard1)
             {
-                 // spawn all 6 asteroid shards
-                 int shatteredAsteroidsCreated = 0;
-                 
+                  
                  if (asteroidScript.asteroidShardSpawnPoint1 != null &&  asteroidScript.asteroidShardPrefabObjects1 != null 
                     && asteroidScript.asteroidShardSpawnPoint1.Length ==  asteroidScript.asteroidShardPrefabObjects1.Length)
                  {
@@ -184,22 +168,29 @@ namespace DefaultNamespace
                      
                          asteroidRigidBody.AddForce( spawnSpeed *  direction2d);
 
-                         shatteredAsteroidsCreated++;
+                        
 
                      }   
                      
-                     shatteredAsteroidDestroyedCount+= shatteredAsteroidsCreated;
+                     ShatteredAsteroidCount+= asteroidShardPrefabs.Length;
                      
                  }
 
+                 LargeAsteroidCount--;
+            }
+            else
+            {
+                
+                ShatteredAsteroidCount--;
+
             }
 
-            LargeAsteroidCount--;
-            
             OnDestroyAsteroid?.Invoke(this, new OnDestroyAsteroidEventArgs
             {
                 asteroidToDestroyGameObject = e.asteroidGameObject,
             });
+            
+            
             
             if (LargeAsteroidCount == 0 && ShatteredAsteroidCount == 0)
             {
@@ -210,6 +201,8 @@ namespace DefaultNamespace
                 });
             }
             
+            // Debug.Log(largeAsteroidCount);
+            // Debug.Log(ShatteredAsteroidCount);
         }
 
         private int GetAsteroidCountForCurrentLevel()

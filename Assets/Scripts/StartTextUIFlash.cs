@@ -11,25 +11,15 @@ public class StartTextUIFlash : MonoBehaviour
     {
         
         _TextUI = GetComponentInChildren<TextMeshProUGUI>();
-        GameManager.Instance.OnPlayerSpawn += GameManager_OnPlayerSpawn;
-     
-    }
-    private void GameManager_OnPlayerSpawn(object sender, GameManager.OnPlayerSpawnEventArgs e)
-    {
-        //when player is spawned subscribe to events from the player
-        e.playerGameObject.GetComponent<Starship>().OnGameStateChange += Starship_OnGameStateChange;
-        e.playerGameObject.GetComponent<Starship>().OnCrash += Starship_OnCrash;
+        GameManager.Instance.OnStateChange += GameManager_OnGameStateChange;
     }
     
-    private void Starship_OnCrash(object sender,Starship.OnCrashEventArgs e)
+    private void GameManager_OnGameStateChange(object sender, GameManager.OnStateChangeEventArgs e)
     {
-        //unsubscribe from events from the player
-        e.gameObject.GetComponent<Starship>().OnGameStateChange -= Starship_OnGameStateChange;
-
-    }
-    private void Starship_OnGameStateChange(object sender, Starship.OnGameStateChangeEventArgs e)
-    {
-        _TextUI.gameObject.SetActive(false);
+        if (e.gameState == GameManager.GameState.GameRunning)
+        {
+            gameObject.SetActive(false);
+        }
     }
 
     private void Update()

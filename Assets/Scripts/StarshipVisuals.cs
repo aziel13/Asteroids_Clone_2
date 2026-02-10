@@ -10,7 +10,7 @@ public class StarshipVisuals : MonoBehaviour
         _StarshipRenderer = gameObject.GetComponentInChildren<SpriteRenderer>().gameObject;
         
         Starship.Instance.OnGameStateChange += Starship_OnGameStateChange;
-        _StarshipRenderer.SetActive(false);
+        
     }
 
     private void Starship_OnGameStateChange(object sender, Starship.OnGameStateChangeEventArgs e)
