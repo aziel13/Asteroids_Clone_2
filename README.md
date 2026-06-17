@@ -22,4 +22,17 @@ and import my code and assets
 You should be able to play the game from the unity editor once its imported.
 
 ## Contributing
-Aziel13
+
+### Clone the repo
+
+```bash
+git clone https://github.com/aziel13/Asteroids_Clone_2.git
+cd Asteroids_Clone_2
+```
+
+
+
+### Submit a pull request
+
+If you'd like to contribute, please fork the repository and open a pull request to the `main` branch.
+
